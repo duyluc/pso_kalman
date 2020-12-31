@@ -28,6 +28,7 @@ class bhat_coe:
     def make_window(self,pso,window):
         self.candidate = np.ones((self.n_pso,4),dtype = np.uint8)
         self.candidate[:,0:2] = pso - window[2:4]
-        self.candidate[:,2:4] = self
+        self.candidate[:,2:4] = self.candidate[0,0:4]*window[2:4]
+        if any
     def make_data(self,frame,window):
 
