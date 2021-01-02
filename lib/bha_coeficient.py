@@ -25,10 +25,12 @@ class bhat_coe:
     def preprocess(self):
         self.model_hsv = cv.cvtColor(self.model_img,cv.COLOR_BGR2HSV)
         self.model_hst = cv.calcHist(self.model_hsv,self.channel,None,self.bin,self.v_range)
-    def make_window(self,pso,window):
-        self.candidate = np.ones((self.n_pso,4),dtype = np.uint8)
-        self.candidate[:,0:2] = pso - (np.copy(window[2:4])/2)
-        self.candidate[:,2:4] = self.candidate[:,2:4]*window[2:4]
+    def make_window(self,pso,frame,window):
+        self.frame = frame.copy()
+        self.frame_hsv = self.make_frame_hsv(self.frame)
+        self.candidate = []
+        self.candidate = pso - (np.copy(window[2:4])/2)
+        self.candidate = np.concatenate((self.candidate,np.ones((pso.shape[0],2))*window[2:4]),1)
         if np.any(self.candidate < 0):
             self.candidate[np.where(self.candidate < 0)] = 0
             print("case 1")
@@ -38,6 +40,16 @@ class bhat_coe:
         if np.any(self.candidate[:,1] > self.frame_shape[0]-1):
             self.candidate[np.where(self.candidate[:,1] > self.frame_shape[0]-1),1] = self.frame_shape[0]
             print("case 3")
+        self.distance = self.make_data(self.frame,window)
+    def make_frame_hsv(self,frame):
+        frame_hsv = cv.cvtColor(frame,cv.COLOR_BGR2HSV)
+        return frame_hsv
     def make_data(self,frame,window):
-        pass
-
+        distance = []
+        for i in self.candidate:
+            i = np.int0(i)
+            candidate_img = self.frame_hsv[i[1]:i[1]+i[3],i[0]:i[0]+i[2]]
+            candidate_hst = cv.calcHist(candidate_img,self.channel,None,self.bin,self.v_range)
+            bhat = cv.compareHist(self.model_hst,candidate_hst,cv.HISTCMP_BHATTACHARYYA)
+            distance = np.append(distance,bhat)
+        return distance
